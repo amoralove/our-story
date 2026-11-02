@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Our Story</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #3b2f2a;
+    --rose: #b4475a;
+    --paper: #f7f0e6;
+    --night: #000;
+    --moon: #f5efe6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    background: var(--night);
+    color: var(--moon);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    overflow-x: hidden;
+  }
+  body.locked { overflow: hidden; }
+
+  /* ---------- Intro (black screen story) ---------- */
+  #intro {
+    position: fixed; inset: 0; z-index: 10;
+    background: var(--night);
+    display: grid; place-items: center;
+    padding: 24px;
+    transition: opacity 2.2s ease;
+    cursor: default;
+  }
+  #intro.gone { opacity: 0; pointer-events: none; }
+  #story, #open { grid-area: 1 / 1; }
+
+  /* the "click to open" heart shown after the story */
+  #open {
+    display: none;
+    flex-direction: column; align-items: center; gap: 16px;
+    background: none; border: 0; color: var(--moon); cursor: pointer;
+    font: italic 1.35rem 'Cormorant Garamond', serif; letter-spacing: .06em;
+    opacity: 0; transition: opacity 1.6s ease;
+  }
+  #open.show { display: flex; }
+  #open.visible { opacity: 1; }
+  #open:focus-visible { outline: none; }
+  #open .heart {
+    font-size: 5rem; line-height: 1; font-style: normal;
+    color: #e07a8b;
+    text-shadow: 0 0 34px rgba(224,122,139,.65);
+    animation: beat 1.5s ease-in-out infinite;
+  }
+  #open .label { opacity: .75; }
+  #open.burst .heart { animation: burst 1s ease-in forwards; }
+  #open.burst .label { opacity: 0; transition: opacity .4s; }
+  @keyframes beat {
+    0%, 100% { transform: scale(1); }
+    15% { transform: scale(1.18); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.12); }
+  }
+  @keyframes burst { to { transform: scale(16); opacity: 0; } }
+
+  #story {
+    max-width: 760px;
+    text-align: center;
+    font-size: clamp(1.6rem, 4.6vw, 2.9rem);
+    line-height: 1.45;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .line { transition: opacity 1.2s ease, filter 1.2s ease; }
+  .line.out { opacity: 0; filter: blur(8px); }
+  .word {
+    display: inline-block;
+    margin: 0 .14em;
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(10px);
+    transition: opacity 1s ease, filter 1s ease, transform 1s ease;
+  }
+  .word.on { opacity: 1; filter: blur(0); transform: none; }
+
+  #skip {
+    position: absolute;
+    right: calc(20px + env(safe-area-inset-right, 0px));
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    background: none; border: 0; color: var(--moon);
+    font: italic 1rem 'Cormorant Garamond', serif;
+    opacity: .35; cursor: pointer; padding: 8px;
+    transition: opacity .3s;
+  }
+  #skip:hover { opacity: .8; }
+  #skip[hidden] { display: none; }
+
+  /* ---------- Collage ---------- */
+  #collage {
+    position: relative;
+    min-height: 100vh;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,214,214,.55), transparent 40%),
+      radial-gradient(circle at 85% 75%, rgba(255,228,196,.6), transparent 45%),
+      var(--paper);
+    padding-block: 64px 96px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  #collage.show { opacity: 1; }
+
+  #collage header { text-align: center; margin-bottom: 52px; position: relative; z-index: 2; }
+  #collage h1 {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(3rem, 11vw, 6.2rem);
+    color: var(--rose);
+    line-height: 1;
+    opacity: 0; transform: translateY(20px) scale(.96);
+    transition: opacity 1.2s ease .3s, transform 1.2s ease .3s;
+  }
+  #collage .sub {
+    margin-top: 10px;
+    font-style: italic;
+    font-size: clamp(1.1rem, 3vw, 1.4rem);
+    opacity: 0;
+    transition: opacity 1.2s ease .9s;
+  }
+  #collage.show h1 { opacity: 1; transform: none; }
+  #collage.show .sub { opacity: .75; }
+
+  #board { position: relative; z-index: 2; max-width: 1180px; margin: 0 auto; }
+
+  .chapter { margin-bottom: 84px; }
+  .chapter h2 {
+    font-family: 'Caveat', cursive; font-weight: 700;
+    font-size: clamp(2.1rem, 6vw, 3rem);
+    color: var(--rose); text-align: center; line-height: 1.1;
+    opacity: 0; transform: translateY(16px);
+    transition: opacity 1s ease, transform 1s ease;
+  }
+  .chapter .when {
+    text-align: center; font-style: italic; font-size: 1.15rem;
+    margin: 4px 0 40px;
+    opacity: 0; transition: opacity 1s ease .3s;
+  }
+  .chapter.in h2 { opacity: 1; transform: none; }
+  .chapter.in .when { opacity: .65; }
+
+  .grid {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 44px 30px;
+  }
+  .grid > div { flex: 0 1 210px; }
+  @media (max-width: 480px) {
+    .grid { gap: 30px 16px; }
+    .grid > div { flex-basis: calc(50% - 8px); }
+  }
+
+  .polaroid {
+    position: relative;
+    background: #fff;
+    padding: 11px 11px 14px;
+    box-shadow: 0 10px 24px rgba(60,40,30,.18), 0 2px 6px rgba(60,40,30,.12);
+    cursor: pointer;
+    opacity: 0;
+    transform: translate(var(--fx), var(--fy)) rotate(var(--fr)) scale(.35);
+    transition: transform 1.2s cubic-bezier(.18,.9,.25,1.08), opacity .9s ease, box-shadow .35s ease;
+  }
+  .polaroid.in { opacity: 1; transform: rotate(var(--r)); }
+  .polaroid.in.settled { transition-duration: .35s, .35s, .35s; }
+  .polaroid.in:hover, .polaroid.in:focus-visible {
+    transform: rotate(0deg) scale(1.08);
+    z-index: 5;
+    box-shadow: 0 22px 44px rgba(60,40,30,.28), 0 4px 10px rgba(60,40,30,.15);
+    outline: none;
+  }
+  .polaroid::before { /* tape */
+    content: '';
+    position: absolute; top: -12px; left: 50%;
+    width: 78px; height: 24px;
+    background: rgba(255, 232, 196, .75);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    transform: translateX(-50%) rotate(var(--tr));
+  }
+  .polaroid.is-video::after { /* little play badge */
+    content: '▶';
+    position: absolute; top: 20px; right: 20px;
+    width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: rgba(255,255,255,.85); color: var(--rose);
+    font-size: .75rem; padding-left: 2px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  }
+  .polaroid img, .polaroid video {
+    display: block; width: 100%;
+    aspect-ratio: 4 / 5; object-fit: cover; object-position: 50% 35%;
+    background: #eee;
+  }
+  .polaroid figcaption {
+    font-family: 'Caveat', cursive;
+    font-size: 1.35rem;
+    text-align: center;
+    margin-top: 9px;
+    color: #4a3a33;
+    line-height: 1.15;
+  }
+
+  #collage footer {
+    position: relative; z-index: 2;
+    text-align: center; margin-top: 80px;
+    opacity: 0; transition: opacity 1.5s ease;
+  }
+  #collage footer.show { opacity: 1; }
+  #ending {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(2rem, 6vw, 3rem);
+    color: var(--rose);
+  }
+  #replay {
+    margin-top: 18px;
+    background: none; border: 1px solid rgba(59,47,42,.3); border-radius: 999px;
+    padding: 8px 20px; color: var(--ink);
+    font: italic 1.05rem 'Cormorant Garamond', serif;
+    cursor: pointer; transition: background .3s;
+  }
+  #replay:hover { background: rgba(180,71,90,.08); }
+
+  /* floating hearts */
+  #hearts { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+  .float-heart {
+    position: absolute; bottom: -40px;
+    color: #e8909e;
+    animation: rise linear forwards;
+  }
+  .float-heart.note {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    white-space: nowrap;
+    color: #c95b70;
+  }
+  @keyframes rise {
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    10%  { opacity: var(--o); }
+    100% { transform: translate(var(--drift), -110vh) rotate(var(--spin)); opacity: 0; }
+  }
+
+  /* ---------- Lightbox ---------- */
+  #lightbox {
+    position: fixed; inset: 0; z-index: 20;
+    background: rgba(20, 12, 10, .9);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .4s ease;
+  }
+  #lightbox.open { opacity: 1; pointer-events: auto; }
+  #lb-img, #lb-vid {
+    max-width: min(92vw, 1000px); max-height: 76vh;
+    border: 10px solid #fff; border-bottom-width: 14px;
+    background: #fff;
+    box-shadow: 0 30px 60px rgba(0,0,0,.5);
+    transform: scale(.94); transition: transform .4s ease;
+  }
+  #lb-img[hidden], #lb-vid[hidden] { display: none; }
+  #lightbox.open #lb-img, #lightbox.open #lb-vid { transform: none; }
+  #lb-cap {
+    font-family: 'Caveat', cursive; font-size: clamp(1.6rem, 5vw, 2.2rem);
+    color: #fff; margin-top: 16px; text-align: center; max-width: 90vw;
+  }
+  .lb-btn {
+    position: absolute; background: none; border: 0; color: #fff;
+    font-size: 2.4rem; line-height: 1; cursor: pointer; opacity: .7; padding: 14px;
+    transition: opacity .2s;
+  }
+  .lb-btn:hover { opacity: 1; }
+  #lb-prev { left: 4px; top: 50%; transform: translateY(-50%); }
+  #lb-next { right: 4px; top: 50%; transform: translateY(-50%); }
+  #lb-close {
+    right: calc(6px + env(safe-area-inset-right, 0px));
+    top: calc(4px + env(safe-area-inset-top, 0px));
+    font-size: 2rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .polaroid, .word, .line, #intro, #collage { transition-duration: .01s !important; }
+    .float-heart { display: none; }
+  }
+</style>
+</head>
+<body class="locked">
+
+<section id="intro" aria-live="polite">
+  <div id="story"></div>
+  <button id="open"><span class="heart">♥</span><span class="label">click to open our memories</span></button>
+  <button id="skip" hidden>skip ›</button>
+</section>
+
+<main id="collage" aria-hidden="true">
+  <div id="hearts"></div>
+  <header>
+    <h1 id="title"></h1>
+    <p class="sub" id="subtitle"></p>
+  </header>
+  <div id="board"></div>
+  <footer id="foot">
+    <p id="ending"></p>
+    <button id="replay">↺ watch our story again</button>
+  </footer>
+</main>
+
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo">
+  <button class="lb-btn" id="lb-close" aria-label="Close">×</button>
+  <button class="lb-btn" id="lb-prev" aria-label="Previous photo">‹</button>
+  <img id="lb-img" alt="">
+  <video id="lb-vid" controls playsinline hidden></video>
+  <p id="lb-cap"></p>
+  <button class="lb-btn" id="lb-next" aria-label="Next photo">›</button>
+</div>
+
+<script>
+/* =========================================================
+   ✏️  EDIT EVERYTHING IN THIS BLOCK TO MAKE IT YOURS
+   ---------------------------------------------------------
+   • story: each line appears on the black screen, one at a time
+   • chapters: each one gets a heading, then its photos.
+     Photos live in the "photos" folder next to this file
+     (web-sized copies are in photos/web). Missing photos
+     show a pretty placeholder instead.
+   • videos: use an .mp4 as the src, plus a "poster" image
+     shown before it loads. They play silently in the
+     collage and with sound when opened.
+   ========================================================= */
+const CONFIG = {
+  story: [
+    "Once upon a time…",
+    "a boy met a girl, and the world got a little brighter.",
+    "There were first dates, nervous laughs, and conversations that went until 2am.",
+    "From Destin to Tampa, from LA all the way to Seoul and Japan, we made memories everywhere we went.",
+    "Then came Puca, a four-legged troublemaker who stole both our hearts.",
+    "Somewhere along the way, the two of us and Puca became a family.",
+    "Four years later…",
+    "this is our story."
+  ],
+
+  title: "Happy 4 Years",
+  subtitle: "to my favorite person (and Puca, obviously)",
+
+  chapters: [
+    {
+      title: "Making memories", when: "2024",
+      photos: [
+        { src: "photos/web/misc_img_0040.jpg", caption: "All dressed up" },
+        { src: "photos/web/misc_img_0053.jpg", caption: "Destin, crowns and all" },
+        { src: "photos/web/tampa_img_0305.jpg", caption: "Tampa sunsets" }
+      ]
+    },
+    {
+      title: "Our adventures", when: "2025",
+      photos: [
+        { src: "photos/web/misc_img_0583.jpg", caption: "Coffee dates at Ralph's" },
+        { src: "photos/web/misc_img_1139.jpg", caption: "Us + one Minion" },
+        { src: "photos/web/la_img_1200.jpg", caption: "LA, arms wide open" },
+        { src: "photos/web/misc_img_1254.jpg", caption: "Feasting (as usual)" },
+        { src: "photos/web/misc_img_1313.mp4", poster: "photos/web/misc_img_1313.jpg", caption: "My tiny coding assistant" }
+      ]
+    },
+    {
+      title: "Then came Puca", when: "our favorite troublemaker",
+      photos: [
+        { src: "photos/web/dogs_img_4642.jpg", caption: "Puppy love" },
+        { src: "photos/web/dogs_img_1434.jpg", caption: "Our little family" },
+        { src: "photos/web/dogs_img_1453.jpg", caption: "Puca & the toast" },
+        { src: "photos/web/dogs_img_1515.mp4", poster: "photos/web/dogs_img_1515.jpg", caption: "Sleepy cuddles" },
+        { src: "photos/web/dogs_img_1571.jpg", caption: "Professional bed hog" },
+        { src: "photos/web/dogs_img_1610.jpg", caption: "Look at that face" },
+        { src: "photos/web/dogs_img_1576.mp4", poster: "photos/web/dogs_img_1576.jpg", caption: "Treat time!" },
+        { src: "photos/web/dogs_ppsc519191fbf4a64a95-20261030143822190.jpg", caption: "Puca on guard duty" }
+      ]
+    },
+    {
+      title: "Graduation, Seoul & Japan", when: "2025 – 2026",
+      photos: [
+        { src: "photos/web/grad_img_0296.mp4", poster: "photos/web/grad_img_0296.jpg", caption: "Caps up!" },
+        { src: "photos/web/grad_img_1585.jpg", caption: "We did it!" },
+        { src: "photos/web/koreajap_img_2071.jpg", caption: "Sweet treats" },
+        { src: "photos/web/koreajap_img_2220.jpg", caption: "Exploring Seoul" },
+        { src: "photos/web/koreajap_img_2183.jpg", caption: "Wandering Bukchon" },
+        { src: "photos/web/koreajap_img_2202.jpg", caption: "Hanbok day" },
+        { src: "photos/web/koreajap_img_2206.jpg", caption: "Gyeongbokgung Palace" },
+        { src: "photos/web/koreajap_img_2208.jpg", caption: "My favorite view" },
+        { src: "photos/web/koreajap_img_2213.jpg", caption: "Market adventures" },
+        { src: "photos/web/koreajap_img_2231.jpg", caption: "Love locks at Namsan Tower" }
+      ]
+    }
+  ],
+
+  // little love notes that float up behind the photos with the hearts
+  loveNotes: [
+    "Te amo ♥",
+    "Mi vida",
+    "Te quiero un chorro",
+    "Eres mi todo",
+    "Mi amorcito ♥",
+    "Contigo, siempre",
+    "Mi cielo",
+    "Te adoro, mi reina",
+    "Eres lo más bonito de mi vida",
+    "Mi persona favorita",
+    "Te amo con todo mi corazón ♥",
+    "Cuatro años y contando…",
+    "Mi corazón es tuyo",
+    "Eres mi lugar seguro",
+    "Por muchos años más ♥",
+    "Mi chula preciosa"
+  ],
+
+  ending: "Happy anniversary, my love. Here's to year five and beyond. ♥",
+
+  // timing (milliseconds)
+  wordDelay: 230,    // gap between words appearing
+  lineHold: 2300,    // how long a finished line stays on screen
+  cardStagger: 140   // gap between photos flying in
+};
+/* ========================================================= */
+
+document.body.classList.add('locked');   // no scrolling until the collage opens
+
+const $ = (id) => document.getElementById(id);
+const intro = $('intro'), story = $('story'), skipBtn = $('skip'), openBtn = $('open');
+const collage = $('collage'), board = $('board'), foot = $('foot'), heartsEl = $('hearts');
+const lightbox = $('lightbox'), lbImg = $('lb-img'), lbVid = $('lb-vid'), lbCap = $('lb-cap');
+
+$('title').textContent = CONFIG.title;
+$('subtitle').textContent = CONFIG.subtitle;
+$('ending').textContent = CONFIG.ending;
+
+let run = 0;          // bumps on skip/replay so stale timers stop
+let started = false;
+let heartTimer = null;
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const rand = (a, b) => a + Math.random() * (b - a);
+const isVideo = (p) => /\.(mp4|webm|mov)$/i.test(p.src);
+
+function placeholder(i) {
+  const hue = [350, 18, 38, 200, 280, 160, 330, 8][i % 8];
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'>
+    <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0' stop-color='hsl(${hue},75%,86%)'/>
+      <stop offset='1' stop-color='hsl(${hue + 30},60%,72%)'/>
+    </linearGradient></defs>
+    <rect width='600' height='600' fill='url(#g)'/>
+    <text x='300' y='330' font-family='Georgia' font-size='140' text-anchor='middle' fill='white' opacity='.85'>♥</text>
+    <text x='300' y='430' font-family='Georgia' font-style='italic' font-size='30' text-anchor='middle' fill='white'>photo ${i + 1}</text>
+  </svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+/* ---------- build the collage, chapter by chapter ---------- */
+const photos = CONFIG.chapters.flatMap((c) => c.photos);
+const chapters = [];
+const slots = [];   // grid cells we watch while scrolling (the cards themselves fly around)
+
+CONFIG.chapters.forEach((ch) => {
+  const sec = document.createElement('section');
+  sec.className = 'chapter';
+  const head = document.createElement('div');
+  const h2 = document.createElement('h2');
+  h2.textContent = ch.title;
+  const when = document.createElement('p');
+  when.className = 'when';
+  when.textContent = ch.when || '';
+  head.append(h2, when);
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  sec.append(head, grid);
+  board.appendChild(sec);
+  chapters.push({ sec, head });
+  ch.photos.forEach(() => {
+    const slot = document.createElement('div');
+    grid.appendChild(slot);
+    slots.push(slot);
+  });
+});
+
+const cards = photos.map((p, i) => {
+  const fig = document.createElement('figure');
+  fig.className = 'polaroid';
+  fig.tabIndex = 0;
+  fig.style.setProperty('--r', rand(-7, 7).toFixed(1) + 'deg');
+  fig.style.setProperty('--tr', rand(-8, 8).toFixed(1) + 'deg');
+  let media;
+  if (isVideo(p)) {
+    media = document.createElement('video');
+    media.muted = true;
+    media.loop = true;
+    media.playsInline = true;
+    media.preload = 'metadata';
+    media.poster = p.poster || '';
+    media.src = p.src;
+    media.setAttribute('aria-label', p.caption || `Video ${i + 1}`);
+    fig.classList.add('is-video');
+  } else {
+    media = document.createElement('img');
+    media.alt = p.caption || `Photo ${i + 1}`;
+    media.loading = 'lazy';
+    media.onerror = () => { media.onerror = null; media.src = placeholder(i); };
+    media.src = p.src;
+  }
+  const cap = document.createElement('figcaption');
+  cap.textContent = p.caption || '';
+  fig.append(media, cap);
+  fig.addEventListener('click', () => openLightbox(i));
+  fig.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(i); } });
+  slots[i].appendChild(fig);
+  return fig;
+});
+
+// videos play silently while they're on screen
+const videoWatcher = new IntersectionObserver((entries) => {
+  entries.forEach((e) => {
+    if (e.isIntersecting && collage.classList.contains('show')) e.target.play().catch(() => {});
+    else e.target.pause();
+  });
+}, { threshold: 0.4 });
+cards.forEach((c) => { const v = c.querySelector('video'); if (v) videoWatcher.observe(v); });
+
+// photos fly in as you scroll down to them
+let observer = null;
+function revealOnScroll(id) {
+  if (observer) observer.disconnect();
+  observer = new IntersectionObserver((entries) => {
+    entries.filter((e) => e.isIntersecting).forEach((e, k) => {
+      const el = e.target;
+      observer.unobserve(el);
+      const slot = slots.indexOf(el);
+      if (slot === -1) {
+        (chapters.find((c) => c.head === el)?.sec || el).classList.add(el === foot ? 'show' : 'in');
+        return;
+      }
+      setTimeout(() => {
+        if (id !== run) return;
+        cards[slot].classList.add('in');
+        setTimeout(() => cards[slot].classList.add('settled'), 1300);
+      }, k * CONFIG.cardStagger);
+    });
+  }, { rootMargin: '0px 0px -8% 0px' });
+  chapters.forEach((c) => observer.observe(c.head));
+  slots.forEach((s) => observer.observe(s));
+  observer.observe(foot);
+}
+
+function scatter() {
+  // each card starts somewhere far away, spun around, then flies to its spot
+  cards.forEach((c) => {
+    c.classList.remove('in', 'settled');
+    c.style.setProperty('--fx', rand(-700, 700).toFixed(0) + 'px');
+    c.style.setProperty('--fy', rand(-500, 700).toFixed(0) + 'px');
+    c.style.setProperty('--fr', rand(-90, 90).toFixed(0) + 'deg');
+  });
+  chapters.forEach((c) => c.sec.classList.remove('in'));
+  foot.classList.remove('show');
+}
+
+/* ---------- story on black ---------- */
+function startStory() {
+  if (started) return;
+  started = true;
+  skipBtn.hidden = false;
+  playStory();
+}
+
+async function playStory() {
+  const id = ++run;
+  for (const text of CONFIG.story) {
+    story.innerHTML = '';
+    const line = document.createElement('div');
+    line.className = 'line';
+    const words = text.split(/\s+/).map((w) => {
+      const s = document.createElement('span');
+      s.className = 'word';
+      s.textContent = w;
+      line.appendChild(s);
+      return s;
+    });
+    story.appendChild(line);
+    await wait(250);
+    for (const w of words) {
+      if (id !== run) return;
+      w.classList.add('on');
+      await wait(CONFIG.wordDelay);
+    }
+    await wait(CONFIG.lineHold);
+    if (id !== run) return;
+    line.classList.add('out');
+    await wait(1300);
+    if (id !== run) return;
+  }
+  showOpenPrompt();
+}
+
+async function showOpenPrompt() {
+  skipBtn.hidden = true;
+  story.innerHTML = '';
+  openBtn.classList.remove('burst');
+  openBtn.classList.add('show');
+  await wait(50);
+  openBtn.classList.add('visible');
+  openBtn.focus({ preventScroll: true });
+}
+
+function hideOpenPrompt() {
+  openBtn.classList.remove('show', 'visible', 'burst');
+}
+
+async function openCollage() {
+  const id = ++run;
+  skipBtn.hidden = true;
+  setTimeout(() => { if (id === run) hideOpenPrompt(); }, 2300);
+  scatter();
+  window.scrollTo(0, 0);
+  collage.setAttribute('aria-hidden', 'false');
+  collage.classList.add('show');
+  intro.classList.add('gone');
+  document.body.classList.remove('locked');
+  startHearts();
+
+  await wait(900);
+  if (id === run) revealOnScroll(id);
+}
+
+function replay() {
+  run++;
+  if (observer) observer.disconnect();
+  stopHearts();
+  closeLightbox();
+  story.innerHTML = '';
+  hideOpenPrompt();
+  document.body.classList.add('locked');
+  intro.classList.remove('gone');
+  skipBtn.hidden = false;
+  setTimeout(() => {
+    collage.classList.remove('show');
+    collage.setAttribute('aria-hidden', 'true');
+    scatter();
+    playStory();
+  }, 2200);
+}
+
+/* ---------- floating hearts ---------- */
+function spawnHeart() {
+  const h = document.createElement('span');
+  h.className = 'float-heart';
+  h.textContent = '♥';
+  h.style.left = rand(0, 100) + 'vw';
+  h.style.fontSize = rand(12, 30) + 'px';
+  h.style.setProperty('--o', rand(.25, .6).toFixed(2));
+  h.style.setProperty('--drift', rand(-80, 80) + 'px');
+  h.style.setProperty('--spin', rand(-60, 60) + 'deg');
+  h.style.animationDuration = rand(9, 16) + 's';
+  h.addEventListener('animationend', () => h.remove());
+  heartsEl.appendChild(h);
+}
+let notes = [];
+function spawnNote() {
+  if (!notes.length) notes = [...CONFIG.loveNotes].sort(() => Math.random() - .5);
+  const n = document.createElement('span');
+  n.className = 'float-heart note';
+  n.textContent = notes.pop();
+  n.style.left = rand(2, 62) + 'vw';
+  n.style.fontSize = rand(22, 36) + 'px';
+  n.style.setProperty('--o', rand(.45, .75).toFixed(2));
+  n.style.setProperty('--drift', rand(-40, 40) + 'px');
+  n.style.setProperty('--spin', rand(-8, 8) + 'deg');
+  n.style.animationDuration = rand(14, 20) + 's';
+  n.addEventListener('animationend', () => n.remove());
+  heartsEl.appendChild(n);
+}
+
+let noteTimer = null;
+function startHearts() {
+  stopHearts();
+  for (let i = 0; i < 4; i++) setTimeout(spawnHeart, i * 400);
+  heartTimer = setInterval(spawnHeart, 1100);
+  if (CONFIG.loveNotes.length) {
+    setTimeout(spawnNote, 600);
+    noteTimer = setInterval(spawnNote, 3200);
+  }
+}
+function stopHearts() {
+  clearInterval(heartTimer);
+  clearInterval(noteTimer);
+  heartsEl.innerHTML = '';
+}
+
+/* ---------- lightbox ---------- */
+let current = 0;
+function showPhoto(i) {
+  current = (i + cards.length) % cards.length;
+  const p = photos[current];
+  const vid = isVideo(p);
+  lbVid.pause();
+  lbImg.hidden = vid;
+  lbVid.hidden = !vid;
+  if (vid) {
+    lbVid.poster = p.poster || '';
+    lbVid.src = p.src;
+    lbVid.play().catch(() => {});
+  } else {
+    const img = cards[current].querySelector('img');
+    lbImg.src = img.currentSrc || img.src;
+    lbImg.alt = img.alt;
+  }
+  lbCap.textContent = p.caption || '';
+}
+function openLightbox(i) { showPhoto(i); lightbox.classList.add('open'); }
+function closeLightbox() { lightbox.classList.remove('open'); lbVid.pause(); }
+
+$('lb-prev').addEventListener('click', (e) => { e.stopPropagation(); showPhoto(current - 1); });
+$('lb-next').addEventListener('click', (e) => { e.stopPropagation(); showPhoto(current + 1); });
+$('lb-close').addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+
+let touchX = null;
+lightbox.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+lightbox.addEventListener('touchend', (e) => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 50) showPhoto(current + (dx < 0 ? 1 : -1));
+  touchX = null;
+});
+
+/* ---------- wiring ---------- */
+openBtn.addEventListener('click', () => {
+  if (openBtn.classList.contains('burst')) return;
+  openBtn.classList.add('burst');
+  setTimeout(openCollage, 550);
+});
+skipBtn.addEventListener('click', openCollage);
+$('replay').addEventListener('click', replay);
+
+document.addEventListener('keydown', (e) => {
+  if (lightbox.classList.contains('open')) {
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') showPhoto(current - 1);
+    if (e.key === 'ArrowRight') showPhoto(current + 1);
+  }
+});
+
+// the story begins on its own after a moment of black
+setTimeout(startStory, 1200);
+</script>
+</body>
+</html>
